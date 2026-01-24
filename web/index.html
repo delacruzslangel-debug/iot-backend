@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>LED IoT</title>
+</head>
+<body>
+  <h1>Estado: <span id="state">...</span></h1>
+  <button onclick="toggle()">Cambiar</button>
+
+<script>
+async function loadState() {
+  const r = await fetch('/api/state');
+  const d = await r.json();
+  document.getElementById('state').innerText = d.state;
+}
+
+async function toggle() {
+  const r = await fetch('/api/toggle');
+  const d = await r.json();
+  document.getElementById('state').innerText = d.state;
+}
+
+loadState();
+</script>
+</body>
+</html>
