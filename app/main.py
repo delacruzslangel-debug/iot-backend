@@ -1,5 +1,9 @@
 from fastapi import FastAPI
 from app.mqtt_client import start_mqtt, enviar_comando, obtener_estado
+import os
+
+MQTT_BROKER = os.getenv("MQTT_BROKER", "broker.hivemq.com")
+MQTT_PORT = int(os.getenv("MQTT_PORT", 1883))
 
 app = FastAPI()
 
