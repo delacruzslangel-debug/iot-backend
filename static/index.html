@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Control IoT LED</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 80px;
+    }
+    button {
+      font-size: 22px;
+      padding: 15px 40px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .on {
+      background: #22c55e;
+      color: black;
+    }
+    .off {
+      background: #ef4444;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🔌 Control de LED (ESP32)</h1>
+  <p id="estado">Estado: --</p>
+
+  <button id="btn" onclick="toggle()">Cargando...</button>
+
+<script>
+const API = "";
+
+async function cargarEstado() {
+  const res = await fetch(API + "/state");
+  const data = await res.json();
+  actualizar(data.state);
+}
+
+async function toggle() {
+  const res = await fetch(API + "/toggle");
+  const data = await res.json();
+  actualizar(data.state);
+}
+
+function actualizar(state) {
+  const btn = document.getElementById("btn");
+  const estado = document.getElementById("estado");
+
+  estado.innerText = "Estado: " + state;
+
+  if (state === "ON") {
+    btn.innerText = "APAGAR";
+    btn.className = "off";
+  } else {
+    btn.innerText = "ENCENDER";
+    btn.className = "on";
+  }
+}
+
+cargarEstado();
+</script>
+
+</body>
+</html>

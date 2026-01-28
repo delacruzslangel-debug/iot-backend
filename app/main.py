@@ -65,4 +65,3 @@ def toggle_led():
 @app.get("/state")
 def get_state():
     return {"state": led_state["value"]}
-
