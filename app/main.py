@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 import paho.mqtt.client as mqtt
 
@@ -17,7 +16,7 @@ led_state = {"value": "OFF"}
 app = FastAPI()
 
 # Servir archivos estáticos
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 # ======================
 # MQTT
@@ -47,21 +46,14 @@ mqtt_client.loop_start()
 def status():
     return {"status": "Backend IoT activo"}
 
-@app.get("/web", response_class=HTMLResponse)
-def web():
-    with open("static/index.html", "r", encoding="utf-8") as f:
-        return f.read()
+@app.get("/api/state")
+def get_state():
+    return {"state": led_state["value"]}
 
-@app.get("/toggle")
+@app.get("/api/toggle")
 def toggle_led():
-    global led_state
-
     new_state = "OFF" if led_state["value"] == "ON" else "ON"
     led_state["value"] = new_state
 
     mqtt_client.publish(TOPIC_CONTROL, new_state, qos=1)
     return {"state": new_state}
-
-@app.get("/state")
-def get_state():
-    return {"state": led_state["value"]}
