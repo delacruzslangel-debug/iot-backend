@@ -43,8 +43,8 @@ mqtt_client.loop_start()
 # ======================
 # Endpoints
 # ======================
-@app.get("/")
-def root():
+@app.get("/api/status")
+def status():
     return {"status": "Backend IoT activo"}
 
 @app.get("/web", response_class=HTMLResponse)
