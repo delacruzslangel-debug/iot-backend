@@ -49,7 +49,7 @@ def startup_event():
 def status():
     return {"status": "Backend IoT activo"}
 
-@app.get("/api/state")
+@app.get("/state")
 def get_state():
     return {"state": led_state["value"]}
 
