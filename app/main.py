@@ -7,8 +7,8 @@ import paho.mqtt.client as mqtt
 # ======================
 MQTT_BROKER = "broker.hivemq.com"
 MQTT_PORT = 1883
-TOPIC_CONTROL = "ujat/iot/led/control"
-TOPIC_STATUS = "ujat/iot/led/status"
+TOPIC_CONTROL = "luismqtt/led/cmd"
+TOPIC_STATUS  = "luismqtt/led/state"
 
 # Estado global del LED
 led_state = {"value": "OFF"}
