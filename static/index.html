@@ -1,68 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Control IoT LED</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 80px;
+    }
+    button {
+      font-size: 22px;
+      padding: 15px 40px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .on {
+      background: #22c55e;
+      color: black;
+    }
+    .off {
+      background: #ef4444;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🔌 Control de LED (ESP32)</h1>
+<p id="estado">Estado: --</p>
+<button id="btn" disabled>Cargando...</button>
+
 <script>
-const API = ""; // mismo dominio (Render)
+const ws = new WebSocket(
+  (location.protocol === "https:" ? "wss://" : "ws://") +
+  location.host + "/ws"
+);
 
-/* =========================
-   Cargar estado inicial
-========================= */
-async function cargarEstado() {
-  try {
-    const res = await fetch(API + "/state");
-    if (!res.ok) throw new Error("Backend no responde");
+const btn = document.getElementById("btn");
+const estado = document.getElementById("estado");
 
-    const data = await res.json();
-    actualizar(data.state);
-  } catch (e) {
-    mostrarError();
-  }
-}
+let estadoActual = null;
 
-/* =========================
-   Toggle LED
-========================= */
-async function toggle() {
-  try {
-    const res = await fetch(API + "/toggle");
-    if (!res.ok) throw new Error("Error toggle");
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  estadoActual = data.state;
 
-    const data = await res.json();
-    actualizar(data.state);
-  } catch (e) {
-    mostrarError();
-  }
-}
+  estado.innerText = "Estado: " + estadoActual;
+  btn.disabled = false;
 
-/* =========================
-   Actualizar UI
-========================= */
-function actualizar(state) {
-  const btn = document.getElementById("btn");
-  const estado = document.getElementById("estado");
-
-  estado.innerText = "Estado: " + state;
-
-  if (state === "ON") {
+  if (estadoActual === "ON") {
     btn.innerText = "APAGAR";
     btn.className = "off";
   } else {
     btn.innerText = "ENCENDER";
     btn.className = "on";
   }
-}
+};
 
-/* =========================
-   Error backend
-========================= */
-function mostrarError() {
-  const btn = document.getElementById("btn");
-  const estado = document.getElementById("estado");
+btn.onclick = async () => {
+  btn.disabled = true;
+  await fetch("/toggle");
+};
 
-  btn.innerText = "Error backend";
-  btn.className = "";
-  estado.innerText = "Estado: --";
-}
-
-/* =========================
-   Inicio
-========================= */
-window.onload = cargarEstado;
+ws.onerror = () => {
+  estado.innerText = "Error de conexión";
+};
 </script>
+
+</body>
+</html>
