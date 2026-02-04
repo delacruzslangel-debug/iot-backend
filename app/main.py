@@ -1,112 +1,101 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-import paho.mqtt.client as mqtt
-import asyncio
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Control IoT LED</title>
 
-# ======================
-# MQTT
-# ======================
-MQTT_BROKER = "broker.hivemq.com"
-MQTT_PORT = 1883
-TOPIC_CONTROL = "ujat/iot/led/control"
-TOPIC_STATUS = "ujat/iot/led/status"
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 80px;
+    }
 
-# ======================
-# Estado global
-# ======================
-estado_led = {"value": "OFF"}
-clientes_ws = set()
-event_loop = None   # 🔥 IMPORTANTE
+    h1 {
+      margin-bottom: 20px;
+    }
 
-app = FastAPI()
+    #estado {
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
 
-# ======================
-# Static
-# ======================
-app.mount("/static", StaticFiles(directory="static"), name="static")
+    button {
+      font-size: 22px;
+      padding: 15px 40px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
 
-# ======================
-# WebSocket
-# ======================
-<script>
-const ws = new WebSocket(
-  (location.protocol === "https:" ? "wss://" : "ws://") +
-  location.host +
-  "/ws"
-);
+    .on {
+      background: #22c55e;
+      color: black;
+    }
 
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  actualizar(data.state);
-};
+    .off {
+      background: #ef4444;
+      color: white;
+    }
+  </style>
+</head>
 
-ws.onerror = () => {
-  document.getElementById("estado").innerText = "Error de conexión";
-};
+<body>
 
-function toggle() {
-  fetch("/toggle");
-}
-</script>
+  <h1>🔌 Control de LED (ESP32)</h1>
+  <p id="estado">Estado: Cargando...</p>
+  <button id="btn" class="off" onclick="toggle()">Cargando...</button>
 
-# ======================
-# MQTT callbacks
-# ======================
-def on_connect(client, userdata, flags, rc):
-    print("MQTT conectado:", rc)
-    client.subscribe(TOPIC_STATUS)
+  <script>
+    // =========================
+    // WebSocket seguro (Render)
+    // =========================
+    const protocolo = location.protocol === "https:" ? "wss://" : "ws://";
+    const ws = new WebSocket(protocolo + location.host + "/ws");
 
-def on_message(client, userdata, msg):
-    payload = msg.payload.decode()
-    if payload in ["ON", "OFF"]:
-        estado_led["value"] = payload
-        print("Estado desde ESP32:", payload)
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      actualizar(data.state);
+    };
 
-        # 🔥 Enviar a WebSockets desde el event loop
-        if event_loop:
-            for ws in list(clientes_ws):
-                asyncio.run_coroutine_threadsafe(
-                    ws.send_json({"state": payload}),
-                    event_loop
-                )
+    ws.onerror = () => {
+      document.getElementById("estado").innerText = "Error de conexión";
+      document.getElementById("btn").innerText = "Sin conexión";
+    };
 
-mqtt_client = mqtt.Client()
-mqtt_client.on_connect = on_connect
-mqtt_client.on_message = on_message
+    // =========================
+    // Toggle LED
+    // =========================
+    function toggle() {
+      fetch("/toggle")
+        .catch(() => {
+          document.getElementById("estado").innerText = "Error backend";
+        });
+    }
 
-@app.on_event("startup")
-async def startup_event():
-    mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
-    mqtt_client.loop_start()
+    // =========================
+    // Actualizar UI
+    // =========================
+    function actualizar(state) {
+      const btn = document.getElementById("btn");
+      const estado = document.getElementById("estado");
 
-# ======================
-# Startup
-# ======================
-@app.on_event("startup")
-async def startup_event():
-    global event_loop
-    event_loop = asyncio.get_running_loop()
+      estado.innerText = "Estado: " + state;
 
-# ======================
-# HTTP endpoints
-# ======================
-@app.get("/")
-def root():
-    return {"status": "Backend IoT activo"}
+      if (state === "ON") {
+        btn.innerText = "APAGAR";
+        btn.className = "off";
+      } else if (state === "OFF") {
+        btn.innerText = "ENCENDER";
+        btn.className = "on";
+      }
+    }
+  </script>
 
-@app.get("/web", response_class=HTMLResponse)
-def web():
-    with open("static/index.html", "r", encoding="utf-8") as f:
-        return f.read()
-
-@app.get("/toggle")
-def toggle_led():
-    nuevo = "OFF" if estado_led["value"] == "ON" else "ON"
-    estado_led["value"] = nuevo
-    mqtt_client.publish(TOPIC_CONTROL, nuevo, qos=1)
-    return {"state": nuevo}
-
-@app.get("/state")
-def get_state():
-    return {"state": estado_led["value"]}
+</body>
+</html>
