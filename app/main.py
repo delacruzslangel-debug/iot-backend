@@ -36,8 +36,11 @@ def on_message(client, userdata, msg):
 
 mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
-mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
-mqtt_client.loop_start()
+
+@app.on_event("startup")
+def startup_event():
+    mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
+    mqtt_client.loop_start()
 
 # ======================
 # Endpoints

@@ -41,9 +41,13 @@
 const API = "https://iot-backend-f7lx.onrender.com";
 
 async function cargarEstado() {
-  const res = await fetch(API + "/state");
-  const data = await res.json();
-  actualizar(data.state);
+  try {
+    const res = await fetch(API + "/state");
+    const data = await res.json();
+    actualizar(data.state);
+  } catch (e) {
+    document.getElementById("estado").innerText = "Error backend";
+  }
 }
 
 async function toggle() {
