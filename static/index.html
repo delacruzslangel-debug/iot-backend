@@ -1,51 +1,44 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Control LED IoT</title>
-  <style>
-    body {
-      font-family: Arial;
-      background: #0f172a;
-      color: white;
-      text-align: center;
-      margin-top: 80px;
-    }
-    button {
-      font-size: 22px;
-      padding: 15px 40px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-    }
-    .on { background: #22c55e; }
-    .off { background: #ef4444; }
-  </style>
-</head>
-<body>
-
-<h1>🔌 LED ESP32</h1>
-<p id="estado">Estado: --</p>
-<button id="btn">Cargando...</button>
-
 <script>
-const ws = new WebSocket(
-  (location.protocol === "https:" ? "wss://" : "ws://") +
-  location.host + "/ws"
-);
+const API = ""; // mismo dominio (Render)
 
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  actualizar(data.state);
-};
+/* =========================
+   Cargar estado inicial
+========================= */
+async function cargarEstado() {
+  try {
+    const res = await fetch(API + "/state");
+    if (!res.ok) throw new Error("Backend no responde");
 
-document.getElementById("btn").onclick = async () => {
-  await fetch("/toggle");
-};
+    const data = await res.json();
+    actualizar(data.state);
+  } catch (e) {
+    mostrarError();
+  }
+}
 
+/* =========================
+   Toggle LED
+========================= */
+async function toggle() {
+  try {
+    const res = await fetch(API + "/toggle");
+    if (!res.ok) throw new Error("Error toggle");
+
+    const data = await res.json();
+    actualizar(data.state);
+  } catch (e) {
+    mostrarError();
+  }
+}
+
+/* =========================
+   Actualizar UI
+========================= */
 function actualizar(state) {
   const btn = document.getElementById("btn");
-  document.getElementById("estado").innerText = "Estado: " + state;
+  const estado = document.getElementById("estado");
+
+  estado.innerText = "Estado: " + state;
 
   if (state === "ON") {
     btn.innerText = "APAGAR";
@@ -55,7 +48,21 @@ function actualizar(state) {
     btn.className = "on";
   }
 }
-</script>
 
-</body>
-</html>
+/* =========================
+   Error backend
+========================= */
+function mostrarError() {
+  const btn = document.getElementById("btn");
+  const estado = document.getElementById("estado");
+
+  btn.innerText = "Error backend";
+  btn.className = "";
+  estado.innerText = "Estado: --";
+}
+
+/* =========================
+   Inicio
+========================= */
+window.onload = cargarEstado;
+</script>
