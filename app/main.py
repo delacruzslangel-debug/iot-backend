@@ -29,19 +29,26 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # ======================
 # WebSocket
 # ======================
-@app.websocket("/ws")
-async def websocket_endpoint(ws: WebSocket):
-    await ws.accept()
-    clientes_ws.add(ws)
+<script>
+const ws = new WebSocket(
+  (location.protocol === "https:" ? "wss://" : "ws://") +
+  location.host +
+  "/ws"
+);
 
-    # Enviar estado actual al conectar
-    await ws.send_json({"state": estado_led["value"]})
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  actualizar(data.state);
+};
 
-    try:
-        while True:
-            await ws.receive_text()
-    except WebSocketDisconnect:
-        clientes_ws.remove(ws)
+ws.onerror = () => {
+  document.getElementById("estado").innerText = "Error de conexión";
+};
+
+function toggle() {
+  fetch("/toggle");
+}
+</script>
 
 # ======================
 # MQTT callbacks
