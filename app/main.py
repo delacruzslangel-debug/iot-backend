@@ -45,7 +45,7 @@ def startup_event():
 # ======================
 # Endpoints
 # ======================
-@app.get("/api/status")
+@app.get("/status")
 def status():
     return {"status": "Backend IoT activo"}
 
@@ -53,7 +53,7 @@ def status():
 def get_state():
     return {"state": led_state["value"]}
 
-@app.get("/api/toggle")
+@app.get("/toggle")
 def toggle_led():
     new_state = "OFF" if led_state["value"] == "ON" else "ON"
     led_state["value"] = new_state
