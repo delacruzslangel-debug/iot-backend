@@ -1,62 +1,34 @@
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-import paho.mqtt.client as mqtt
-
-# ======================
-# Configuración MQTT
-# ======================
-MQTT_BROKER = "broker.hivemq.com"
-MQTT_PORT = 1883
-TOPIC_CONTROL = "luismqtt/led/cmd"
-TOPIC_STATUS  = "luismqtt/led/state"
-
-# Estado global del LED
-led_state = {"value": "OFF"}
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# Servir archivos estáticos
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+# CORS (IMPORTANTÍSIMO para la web)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # luego puedes restringir
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# ======================
-# MQTT
-# ======================
-mqtt_client = mqtt.Client()
+# Estado global del LED
+estado_led = {"led": False}
 
-def on_connect(client, userdata, flags, rc):
-    print("MQTT conectado:", rc)
-    client.subscribe(TOPIC_STATUS)
-
-def on_message(client, userdata, msg):
-    global led_state
-    payload = msg.payload.decode()
-    if payload in ["ON", "OFF"]:
-        led_state["value"] = payload
-        print("Estado actualizado desde ESP32:", payload)
-
-mqtt_client.on_connect = on_connect
-mqtt_client.on_message = on_message
-
-@app.on_event("startup")
-def startup_event():
-    mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
-    mqtt_client.loop_start()
-
-# ======================
-# Endpoints
-# ======================
-@app.get("/status")
-def status():
+@app.get("/")
+def root():
     return {"status": "Backend IoT activo"}
 
-@app.get("/state")
-def get_state():
-    return {"state": led_state["value"]}
+@app.get("/estado")
+def obtener_estado():
+    return estado_led
 
-@app.get("/toggle")
-def toggle_led():
-    new_state = "OFF" if led_state["value"] == "ON" else "ON"
-    led_state["value"] = new_state
+@app.post("/led/on")
+def led_on():
+    estado_led["led"] = True
+    return {"ok": True, "led": True}
 
-    mqtt_client.publish(TOPIC_CONTROL, new_state, qos=1)
-    return {"state": new_state}
+@app.post("/led/off")
+def led_off():
+    estado_led["led"] = False
+    return {"ok": True, "led": False}
