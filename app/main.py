@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 import paho.mqtt.client as mqtt
 
 MQTT_BROKER = "broker.hivemq.com"
@@ -8,6 +10,8 @@ TOPIC_STATE = "iot/ujat/led/state"
 estado_led = {"led": False}
 
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 mqtt_client = mqtt.Client()
 
@@ -29,6 +33,11 @@ mqtt_client.loop_start()
 @app.get("/")
 def root():
     return {"status": "Backend IoT activo"}
+
+@app.get("/web", response_class=HTMLResponse)
+def web():
+    with open("static/index.html", encoding="utf-8") as f:
+        return f.read()
 
 @app.get("/estado")
 def obtener_estado():
