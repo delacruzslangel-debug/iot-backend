@@ -1,19 +1,30 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+import paho.mqtt.client as mqtt
+
+MQTT_BROKER = "broker.hivemq.com"
+TOPIC_CMD = "iot/ujat/led/cmd"
+TOPIC_STATE = "iot/ujat/led/state"
+
+estado_led = {"led": False}
 
 app = FastAPI()
 
-# CORS (IMPORTANTÍSIMO para la web)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # luego puedes restringir
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+mqtt_client = mqtt.Client()
 
-# Estado global del LED
-estado_led = {"led": False}
+def on_connect(client, userdata, flags, rc):
+    client.subscribe(TOPIC_STATE)
+
+def on_message(client, userdata, msg):
+    payload = msg.payload.decode()
+    if payload == "ON":
+        estado_led["led"] = True
+    elif payload == "OFF":
+        estado_led["led"] = False
+
+mqtt_client.on_connect = on_connect
+mqtt_client.on_message = on_message
+mqtt_client.connect(MQTT_BROKER, 1883, 60)
+mqtt_client.loop_start()
 
 @app.get("/")
 def root():
@@ -25,10 +36,10 @@ def obtener_estado():
 
 @app.post("/led/on")
 def led_on():
-    estado_led["led"] = True
-    return {"ok": True, "led": True}
+    mqtt_client.publish(TOPIC_CMD, "ON", qos=1)
+    return {"ok": True}
 
 @app.post("/led/off")
 def led_off():
-    estado_led["led"] = False
-    return {"ok": True, "led": False}
+    mqtt_client.publish(TOPIC_CMD, "OFF", qos=1)
+    return {"ok": True}
