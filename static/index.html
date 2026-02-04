@@ -2,96 +2,59 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Control IoT LED</title>
-
+  <title>Control LED IoT</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       background: #0f172a;
       color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      text-align: center;
       margin-top: 80px;
     }
-
-    h1 {
-      margin-bottom: 20px;
-    }
-
     button {
       font-size: 22px;
       padding: 15px 40px;
-      border: none;
       border-radius: 10px;
+      border: none;
       cursor: pointer;
-      margin-top: 20px;
     }
-
-    .on {
-      background: #22c55e;
-      color: black;
-    }
-
-    .off {
-      background: #ef4444;
-      color: white;
-    }
+    .on { background: #22c55e; }
+    .off { background: #ef4444; }
   </style>
 </head>
 <body>
 
-  <h1>🔌 Control de LED (ESP32)</h1>
-  <p id="estado">Estado: --</p>
-
-  <button id="btn" disabled>Cargando...</button>
+<h1>🔌 LED ESP32</h1>
+<p id="estado">Estado: --</p>
+<button id="btn">Cargando...</button>
 
 <script>
-const API = ""; // mismo dominio (Render)
+const ws = new WebSocket(
+  (location.protocol === "https:" ? "wss://" : "ws://") +
+  location.host + "/ws"
+);
 
-async function cargarEstado() {
-  try {
-    const res = await fetch(API + "/estado");
-    const data = await res.json();
-    actualizar(data.led);
-  } catch (e) {
-    document.getElementById("estado").innerText = "Error backend";
-  }
-}
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  actualizar(data.state);
+};
 
-async function toggle() {
-  const estadoActual = document.getElementById("btn").dataset.state;
+document.getElementById("btn").onclick = async () => {
+  await fetch("/toggle");
+};
 
-  if (estadoActual === "true") {
-    await fetch(API + "/led/off", { method: "POST" });
-  } else {
-    await fetch(API + "/led/on", { method: "POST" });
-  }
-
-  setTimeout(cargarEstado, 300); // espera al MQTT
-}
-
-function actualizar(led) {
+function actualizar(state) {
   const btn = document.getElementById("btn");
-  const estado = document.getElementById("estado");
+  document.getElementById("estado").innerText = "Estado: " + state;
 
-  estado.innerText = "Estado: " + (led ? "ENCENDIDO" : "APAGADO");
-
-  btn.disabled = false;
-  btn.dataset.state = led;
-
-  if (led) {
+  if (state === "ON") {
     btn.innerText = "APAGAR";
     btn.className = "off";
   } else {
     btn.innerText = "ENCENDER";
     btn.className = "on";
   }
-
-  btn.onclick = toggle;
 }
-
-cargarEstado();
 </script>
 
 </body>
