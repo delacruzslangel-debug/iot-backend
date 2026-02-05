@@ -69,12 +69,11 @@ async def websocket_endpoint(ws: WebSocket):
     await ws.accept()
     clientes_ws.add(ws)
 
-    # Enviar estado inicial
-    await ws.send_json({"state": estado_led})
+    await ws.send_json({"state": estado_led["value"]})
 
     try:
         while True:
-            await ws.receive_text()
+            await asyncio.sleep(1)
     except WebSocketDisconnect:
         clientes_ws.remove(ws)
 
@@ -111,4 +110,8 @@ def on_message(client, userdata, msg):
 mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
 mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
-mqtt_client.loop_start()
+
+@app.on_event("startup")
+def startup_event():
+    mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
+    mqtt_client.loop_start()
