@@ -56,8 +56,12 @@
     // WebSocket seguro (Render)
     // =========================
     const protocolo = location.protocol === "https:" ? "wss://" : "ws://";
-    const ws = new WebSocket(protocolo + location.host + "/ws");
-
+    const ws = new WebSocket(
+      (location.protocol === "https:" ? "wss://" : "ws://") +
+      location.host +
+      "/ws"
+    );
+    
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       actualizar(data.state);
