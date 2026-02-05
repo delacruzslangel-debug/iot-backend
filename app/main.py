@@ -40,9 +40,9 @@ def root():
 <script>
 const estadoTxt = document.getElementById("estado");
 
-const ws = new WebSocket(
-  (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws"
-);
+// 🔥 DETECTA AUTOMÁTICAMENTE ws / wss
+const protocol = location.protocol === "https:" ? "wss://" : "ws://";
+const ws = new WebSocket(protocol + location.host + "/ws");
 
 ws.onmessage = (event) => {
   const data = JSON.parse(event.data);
