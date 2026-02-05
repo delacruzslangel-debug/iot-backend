@@ -5,50 +5,52 @@
   <title>Control LED IoT</title>
   <style>
     body {
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       text-align: center;
       margin-top: 50px;
     }
-    #estado {
-      font-size: 24px;
-      margin: 20px;
-    }
     button {
+      padding: 15px 30px;
       font-size: 18px;
-      padding: 10px 20px;
+      cursor: pointer;
+    }
+    #estado {
+      font-size: 20px;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
 
-<h1>ESP32 IoT</h1>
-<div id="estado">Conectando...</div>
-<button onclick="toggle()">Toggle LED</button>
+  <h1>Control LED ESP32</h1>
 
-<script>
-  const estadoDiv = document.getElementById("estado");
+  <button onclick="toggle()">Cambiar estado</button>
 
-  // 🔥 Render exige wss
-  const protocol = location.protocol === "https:" ? "wss" : "ws";
-  const ws = new WebSocket(`${protocol}://${location.host}/ws`);
+  <div id="estado">Conectando...</div>
 
-  ws.onopen = () => {
-    estadoDiv.innerText = "Conectado";
-  };
+  <script>
+    const estadoDiv = document.getElementById("estado");
 
-  ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    estadoDiv.innerText = "Estado: " + data.state;
-  };
+    // 🔥 WEBSOCKET CORRECTO PARA RENDER
+    const ws = new WebSocket("wss://iot-backend-f7lx.onrender.com/ws");
 
-  ws.onerror = () => {
-    estadoDiv.innerText = "Error de conexión";
-  };
+    ws.onopen = () => {
+      estadoDiv.innerText = "Conectado al backend";
+    };
 
-  function toggle() {
-    fetch("/toggle");
-  }
-</script>
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      estadoDiv.innerText = "Estado: " + data.state;
+    };
+
+    ws.onerror = () => {
+      estadoDiv.innerText = "Error de conexión";
+    };
+
+    function toggle() {
+      fetch("/toggle");
+    }
+  </script>
 
 </body>
 </html>
