@@ -2,45 +2,47 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>IoT ESP32</title>
+  <title>Control LED IoT</title>
   <style>
     body {
       font-family: Arial;
       text-align: center;
-      margin-top: 60px;
+      margin-top: 50px;
+    }
+    #estado {
+      font-size: 24px;
+      margin: 20px;
     }
     button {
-      font-size: 20px;
-      padding: 10px 30px;
+      font-size: 18px;
+      padding: 10px 20px;
     }
   </style>
 </head>
 <body>
 
-  <h1>Control LED ESP32</h1>
-  <h2 id="estado">Conectando...</h2>
-  <button onclick="toggle()">TOGGLE</button>
+<h1>ESP32 IoT</h1>
+<div id="estado">Conectando...</div>
+<button onclick="toggle()">Toggle LED</button>
 
 <script>
-  const estado = document.getElementById("estado");
+  const estadoDiv = document.getElementById("estado");
 
-  const ws = new WebSocket(
-    (location.protocol === "https:" ? "wss://" : "ws://") +
-    location.host +
-    "/ws"
-  );
+  // 🔥 Render exige wss
+  const protocol = location.protocol === "https:" ? "wss" : "ws";
+  const ws = new WebSocket(`${protocol}://${location.host}/ws`);
 
   ws.onopen = () => {
-    console.log("WebSocket conectado");
+    estadoDiv.innerText = "Conectado";
   };
 
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
-    estado.innerText = "Estado: " + data.state;
+    estadoDiv.innerText = "Estado: " + data.state;
   };
 
   ws.onerror = () => {
-    estado.innerText = "Error de conexión";
+    estadoDiv.innerText = "Error de conexión";
   };
 
   function toggle() {
