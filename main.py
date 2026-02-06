@@ -16,7 +16,7 @@ TOPIC_STATUS = "ujat/iot/led/status"
 # ESTADO GLOBAL
 # ======================
 estado_led = {"value": "OFF"}
-clientes_ws: set[WebSocket] = set()
+clientes_ws = set()
 
 app = FastAPI()
 
@@ -33,12 +33,12 @@ async def websocket_endpoint(ws: WebSocket):
     await ws.accept()
     clientes_ws.add(ws)
 
-    # Enviar estado inicial
+    # Estado inicial
     await ws.send_json({"state": estado_led["value"]})
 
     try:
         while True:
-            await asyncio.sleep(1)
+            await ws.receive_text()   # 🔥 MANTIENE VIVO EL WS
     except WebSocketDisconnect:
         clientes_ws.remove(ws)
 
@@ -58,7 +58,6 @@ def on_message(client, userdata, msg):
         estado_led["value"] = payload
         print("Estado desde ESP32:", payload)
 
-        # Notificar WebSockets
         for ws in list(clientes_ws):
             try:
                 asyncio.create_task(ws.send_json({"state": payload}))

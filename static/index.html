@@ -22,35 +22,34 @@
 </head>
 <body>
 
-  <h1>Control LED ESP32</h1>
+<h1>Control LED ESP32</h1>
 
-  <button onclick="toggle()">Cambiar estado</button>
+<button onclick="toggle()">Cambiar estado</button>
 
-  <div id="estado">Conectando...</div>
+<div id="estado">Conectando...</div>
 
-  <script>
-    const estadoDiv = document.getElementById("estado");
+<script>
+  const estadoDiv = document.getElementById("estado");
 
-    // 🔥 WEBSOCKET CORRECTO PARA RENDER
-    const ws = new WebSocket("wss://iot-backend-f7lx.onrender.com/ws");
+  const ws = new WebSocket("wss://iot-backend-f7lx.onrender.com/ws");
 
-    ws.onopen = () => {
-      estadoDiv.innerText = "Conectado al backend";
-    };
+  ws.onopen = () => {
+    estadoDiv.innerText = "Conectado";
+  };
 
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      estadoDiv.innerText = "Estado: " + data.state;
-    };
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    estadoDiv.innerText = "Estado: " + data.state;
+  };
 
-    ws.onerror = () => {
-      estadoDiv.innerText = "Error de conexión";
-    };
+  ws.onerror = () => {
+    estadoDiv.innerText = "Error de conexión";
+  };
 
-    function toggle() {
-      fetch("/toggle");
-    }
-  </script>
+  function toggle() {
+    fetch("https://iot-backend-f7lx.onrender.com/toggle");
+  }
+</script>
 
 </body>
 </html>
