@@ -6,50 +6,71 @@
   <style>
     body {
       font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
       text-align: center;
-      margin-top: 50px;
+      margin-top: 80px;
     }
     button {
-      padding: 15px 30px;
-      font-size: 18px;
+      font-size: 20px;
+      padding: 15px 40px;
+      border: none;
+      border-radius: 10px;
       cursor: pointer;
     }
-    #estado {
-      font-size: 20px;
-      margin-top: 20px;
+    .on {
+      background: #22c55e;
+      color: black;
+    }
+    .off {
+      background: #ef4444;
+      color: white;
     }
   </style>
 </head>
 <body>
 
-<h1>Control LED ESP32</h1>
+  <h1>🔌 Control LED ESP32</h1>
+  <p id="estado">Estado: --</p>
 
-<button onclick="toggle()">Cambiar estado</button>
+  <button id="btn" onclick="toggle()">Cargando...</button>
 
-<div id="estado">Conectando...</div>
+  <script>
+    const estadoTxt = document.getElementById("estado");
+    const btn = document.getElementById("btn");
 
-<script>
-  const estadoDiv = document.getElementById("estado");
+    async function obtenerEstado() {
+      try {
+        const res = await fetch("/state");
+        const data = await res.json();
+        actualizar(data.state);
+      } catch {
+        estadoTxt.innerText = "Error de conexión";
+      }
+    }
 
-  const ws = new WebSocket("wss://iot-backend-f7lx.onrender.com/ws");
+    async function toggle() {
+      await fetch("/toggle");
+      obtenerEstado();
+    }
 
-  ws.onopen = () => {
-    estadoDiv.innerText = "Conectado";
-  };
+    function actualizar(state) {
+      estadoTxt.innerText = "Estado: " + state;
 
-  ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    estadoDiv.innerText = "Estado: " + data.state;
-  };
+      if (state === "ON") {
+        btn.innerText = "APAGAR";
+        btn.className = "off";
+      } else {
+        btn.innerText = "ENCENDER";
+        btn.className = "on";
+      }
+    }
 
-  ws.onerror = () => {
-    estadoDiv.innerText = "Error de conexión";
-  };
+    // 🔥 Consulta automática cada 1 segundo
+    setInterval(obtenerEstado, 1000);
 
-  function toggle() {
-    fetch("https://iot-backend-f7lx.onrender.com/toggle");
-  }
-</script>
+    obtenerEstado();
+  </script>
 
 </body>
 </html>
